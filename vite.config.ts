@@ -45,12 +45,24 @@ export default defineConfig({
     hmr: hmrConfig,
     fs: {
       // See https://vitejs.dev/config/server-options.html#server-fs-allow for more information
-      allow: ["app", "node_modules"],
+      allow: ["src", "node_modules"],
     },
   },
   plugins: [
     reactRouter(),
     tsconfigPaths(),
+    // HMR workaround: web components need full reload
+    {
+      name: 'force-reload-web-components',
+      handleHotUpdate({ file, server }) {
+        if (file.includes('routes') && (file.endsWith('.tsx') || file.endsWith('.ts'))) {
+          // Small delay to ensure changes are detected
+          setTimeout(() => {
+            server.ws.send({ type: 'full-reload' });
+          }, 100);
+        }
+      },
+    },
   ],
   build: {
     assetsInlineLimit: 0,
